@@ -525,7 +525,6 @@ bool core::handle_incoming_block_blob(const BinaryArray& block_blob, block_verif
     bvc.m_verifivation_failed = true;
     return false;
   }
-  
   return handle_incoming_block(b, bvc, control_miner, relay_block);
 }
 

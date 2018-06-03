@@ -7,7 +7,6 @@
 #include <cctype>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/math/special_functions/round.hpp>
 #include "../Common/Base58.h"
 #include "../Common/int-util.h"
 #include "../Common/StringTools.h"
@@ -538,7 +537,7 @@ difficulty_type Currency::nextDifficulty(std::vector<uint64_t> timestamps,
 										// N is most recently solved block. i must be signed
 	for (int64_t i = 1; i <= N; i++) {
 		// +/- FTL limits are bad timestamp protection.  6xT limits drop in D to reduce oscillations.
-		ST = std::max(-FTL, static_cast<int64_t>(std::min(static_cast<uint64_t>(timestamps[i] - timestamps[i - 1]), static_cast<uint64_t>(6 * T))));
+		ST = std::max(-FTL, std::min<int64_t>(timestamps[i] - timestamps[i - 1], 6 * T));
 		L += ST * i; // Give more weight to most recent blocks.
 					 // Do these inside loop to capture -FTL and +6*T limitations.
 		if (i > N - 3) { sum_3_ST += ST; }

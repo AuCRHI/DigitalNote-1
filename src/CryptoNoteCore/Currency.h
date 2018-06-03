@@ -17,9 +17,6 @@
 
 namespace CryptoNote {
 
-#define MAX_AVERAGE_TIMESPAN          (uint64_t) parameters::DIFFICULTY_TARGET*12   // 24 minutes
-#define MIN_AVERAGE_TIMESPAN(uint64_t) parameters::DIFFICULTY_TARGET / 12  // 10s
-
 class AccountBase;
 
 class Currency {
