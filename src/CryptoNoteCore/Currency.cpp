@@ -7,6 +7,7 @@
 #include <cctype>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/math/special_functions/round.hpp>
 #include "../Common/Base58.h"
 #include "../Common/int-util.h"
 #include "../Common/StringTools.h"
@@ -471,7 +472,8 @@ bool Currency::parseAmount(const std::string& str, uint64_t& amount) const {
   return Common::fromString(strAmount, amount);
 }
 
-difficulty_type Currency::nextDifficulty(std::vector<uint64_t> timestamps,
+//legacy difficulty algorithm
+difficulty_type Currency::nextDifficulty1(std::vector<uint64_t> timestamps,
   std::vector<difficulty_type> cumulativeDifficulties) const {
   assert(m_difficultyWindow >= 2);
 
@@ -501,7 +503,7 @@ difficulty_type Currency::nextDifficulty(std::vector<uint64_t> timestamps,
   assert(/*cut_begin >= 0 &&*/ cutBegin + 2 <= cutEnd && cutEnd <= length);
   uint64_t timeSpan = timestamps[cutEnd - 1] - timestamps[cutBegin];
   if (timeSpan == 0) {
-    timeSpan = 1;
+	  timeSpan = 1;
   }
 
   difficulty_type totalWork = cumulativeDifficulties[cutEnd - 1] - cumulativeDifficulties[cutBegin];
@@ -510,10 +512,59 @@ difficulty_type Currency::nextDifficulty(std::vector<uint64_t> timestamps,
   uint64_t low, high;
   low = mul128(totalWork, m_difficultyTarget, &high);
   if (high != 0 || low + timeSpan - 1 < low) {
-    return 0;
+	  return 0;
   }
 
   return (low + timeSpan - 1) / timeSpan;
+}
+
+//Zawy's LMWA-2 difficulty algo
+difficulty_type Currency::nextDifficulty(std::vector<uint64_t> timestamps,
+	std::vector<difficulty_type> cumulativeDifficulties) const {
+
+	int64_t T = parameters::DIFFICULTY_TARGET;
+	int64_t N = parameters::DIFFICULTY_WINDOW_V1 - 1; //  N=60 in all coins.
+	int64_t FTL = parameters::CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V1; // < 3xT
+	int64_t L(0), sum_3_ST(0), ST, next_D, prev_D, SMA;
+
+	// If expecting a 10x decrease or 1000x increase in D after a fork, consider: 
+	// if ( height >= fork_height && height < fork_height+62 )  { return uint64_t difficulty_guess; }
+
+	// TS and CD vectors should be size 61 after startup.
+	if (timestamps.size() > N) { timestamps.resize(N + 1); cumulativeDifficulties.resize(N + 1); }
+	else if (timestamps.size() < 32) { return 100; } // start up
+	else { N = timestamps.size() - 1; } // start up
+
+										// N is most recently solved block. i must be signed
+	for (int64_t i = 1; i <= N; i++) {
+		// +/- FTL limits are bad timestamp protection.  6xT limits drop in D to reduce oscillations.
+		ST = std::max(-FTL, static_cast<int64_t>(std::min(static_cast<uint64_t>(timestamps[i] - timestamps[i - 1]), static_cast<uint64_t>(6 * T))));
+		L += ST * i; // Give more weight to most recent blocks.
+					 // Do these inside loop to capture -FTL and +6*T limitations.
+		if (i > N - 3) { sum_3_ST += ST; }
+	}
+	if (L < T*N) { L = T * N * 6; } // sanity limit. 
+
+									// Calculate next_D = avgD * T / LWMA(STs) using integer math with rounding (the 0.5+)
+	next_D = 0.5 + (cumulativeDifficulties[N] - cumulativeDifficulties[0]) * T*(N + 1)*0.99*0.5 / L;
+
+	// begin LWMA-2 changes from LWMA
+
+	prev_D = cumulativeDifficulties[N] - cumulativeDifficulties[N - 1];
+	SMA = 0.5 + (cumulativeDifficulties[N - 4] - cumulativeDifficulties[N - 31]) * 4 * T /
+		(3 * N*T + timestamps[N - 5] - timestamps[N - 30]);
+	if (sum_3_ST < T) {
+		if (1.08*prev_D < 1.25*SMA) { next_D = 1.08*prev_D; }
+		else { std::max(next_D, static_cast<int64_t>(0.5*(1.08*prev_D + 1.25*SMA))); }
+	}
+	else if (next_D < 0.9*SMA) { next_D = 0.5*(next_D + 0.9*SMA); }
+	else if (next_D > 1.2*SMA) { next_D = 0.5*(next_D + 1.2*SMA); }
+
+	// end LWMA-2 changes
+
+	return static_cast<uint64_t>(next_D);
+
+	// next_Target = sumTargets*L*2/0.998/T/(N+1)/N/N; // To show the difference.
 }
 
 bool Currency::checkProofOfWorkV1(Crypto::cn_context& context, const Block& block, difficulty_type currentDiffic,
@@ -617,6 +668,7 @@ CurrencyBuilder::CurrencyBuilder(Logging::ILogger& log) : m_currency(log) {
 
   timestampCheckWindow(parameters::BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW);
   blockFutureTimeLimit(parameters::CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT);
+  blockFutureTimeLimit_v1(parameters::CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V1);
 
   moneySupply(parameters::MONEY_SUPPLY);
 
