@@ -114,8 +114,8 @@ const size_t   BLOCKS_IDS_SYNCHRONIZING_DEFAULT_COUNT        =  10000;  //by def
 const size_t   BLOCKS_SYNCHRONIZING_DEFAULT_COUNT            =  128;    //by default, blocks count in blocks downloading
 const size_t   COMMAND_RPC_GET_BLOCKS_FAST_MAX_COUNT         =  1000;
 
-const int      P2P_DEFAULT_PORT                              = 42080;
-const int      RPC_DEFAULT_PORT                              = 42081;
+const int      P2P_DEFAULT_PORT                              = 42085;
+const int      RPC_DEFAULT_PORT                              = 42086;
 
 const size_t   P2P_LOCAL_WHITE_PEERLIST_LIMIT                =  1000;
 const size_t   P2P_LOCAL_GRAY_PEERLIST_LIMIT                 =  5000;
@@ -133,10 +133,10 @@ const size_t   P2P_DEFAULT_HANDSHAKE_INVOKE_TIMEOUT          = 5000;          //
 const char     P2P_STAT_TRUSTED_PUB_KEY[]                    = "85ae8734f90bc1ee295ceb0ec05a49852d4dbbc9d1c27a619b5f4bdf26a0196e";
 
 const std::initializer_list<const char*> SEED_NODES = {
-  "seed1.digitalnote.biz:42080",
-  "seed2.digitalnote.biz:42080",
-  "seed3.digitalnote.biz:42080",
-  "seed4.digitalnote.biz:42080",
+  "seed1.digitalnote.biz:42085",
+  "seed2.digitalnote.biz:42085",
+  "seed3.digitalnote.biz:42085",
+  "seed4.digitalnote.biz:42085",
 };
 
 struct CheckpointData {
