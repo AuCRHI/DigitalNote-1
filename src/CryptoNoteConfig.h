@@ -19,8 +19,7 @@ const uint64_t CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX       = 0xDB; // addresse
 const size_t   CRYPTONOTE_MINED_MONEY_UNLOCK_WINDOW          = 6;
 
 const size_t   BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW             = 30;
-const size_t   BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW_V1 = 11;  //LWMA-2
-
+const size_t   BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW_V1          = 11;  //jagerman's patch
 
 const uint64_t MONEY_SUPPLY                                  = UINT64_C(858986905600000000);
 
@@ -34,15 +33,15 @@ const uint64_t COIN                                          = UINT64_C(10000000
 const uint64_t MINIMUM_FEE                                   = UINT64_C(100000);     // pow(10, 5)
 const uint64_t DEFAULT_DUST_THRESHOLD                        = UINT64_C(100000);     // pow(10, 5)
 
-//const uint64_t DIFFICULTY_TARGET                             = 240; // seconds
-const uint64_t DIFFICULTY_TARGET = 120; // LWMA-2
+//const uint64_t DIFFICULTY_TARGET                           = 240; // pre-LWMA value
+const uint64_t DIFFICULTY_TARGET                             = 120; // LWMA
 const uint64_t CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT            = 60 * 60 * 2;
-const uint64_t CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V1 = 3 * DIFFICULTY_TARGET;  //LWMA-2
+const uint64_t CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V1         = 3 * DIFFICULTY_TARGET;  //LWMA
 const uint64_t EXPECTED_NUMBER_OF_BLOCKS_PER_DAY             = 24 * 60 * 60 / DIFFICULTY_TARGET;
 const size_t   DIFFICULTY_WINDOW                             = 240; // blocks
-const size_t   DIFFICULTY_WINDOW_V1 = 60; // LWMA-2
+const size_t   DIFFICULTY_WINDOW_V1                          = 60; // LWMA
 const size_t   DIFFICULTY_CUT                                = 30;  // timestamps to cut after sorting
-const size_t   DIFFICULTY_LAG                                = 15;  // not used in LWMA-2
+const size_t   DIFFICULTY_LAG                                = 15;  // not used in LWMA
 static_assert(2 * DIFFICULTY_CUT <= DIFFICULTY_WINDOW - 2, "Bad DIFFICULTY_WINDOW or DIFFICULTY_CUT");
 
 const uint64_t DEPOSIT_MIN_AMOUNT                            = 150 * COIN;
@@ -72,11 +71,11 @@ const size_t   FUSION_TX_MIN_IN_OUT_COUNT_RATIO              = 4;
 //const uint32_t UPGRADE_HEIGHT_V2                             = 136212;
 //const uint32_t UPGRADE_HEIGHT_V3                             = 317950;
 //const uint32_t UPGRADE_HEIGHT_V4                             = 338000;
-//const uint32_t UPGRADE_HEIGHT_V5							 = 561277;
-const uint32_t UPGRADE_HEIGHT_V2 = 1;
-const uint32_t UPGRADE_HEIGHT_V3 = 2;
-const uint32_t UPGRADE_HEIGHT_V4 = 3;
-const uint32_t UPGRADE_HEIGHT_V5 = 10;
+//const uint32_t UPGRADE_HEIGHT_V5                             = 668682;  //June 24 12AM CST (6AM UTC)
+const uint32_t UPGRADE_HEIGHT_V2                             = 2;
+const uint32_t UPGRADE_HEIGHT_V3                             = 3;
+const uint32_t UPGRADE_HEIGHT_V4                             = 4;
+const uint32_t UPGRADE_HEIGHT_V5                             = 10;  //at block height 10 PoW + difficulty change
 const unsigned UPGRADE_VOTING_THRESHOLD                      = 90;               // percent
 const size_t   UPGRADE_VOTING_WINDOW                         = EXPECTED_NUMBER_OF_BLOCKS_PER_DAY;  // blocks
 const size_t   UPGRADE_WINDOW                                = EXPECTED_NUMBER_OF_BLOCKS_PER_DAY;  // blocks
@@ -96,6 +95,7 @@ const uint64_t START_BLOCK_REWARD                            = (UINT64_C(320000)
 const uint64_t MIN_BLOCK_REWARD                              = (UINT64_C(150) * parameters::COIN);
 const uint64_t REWARD_HALVING_INTERVAL                       = (UINT64_C(11000));
 
+//const char     CRYPTONOTE_NAME[]                             = "digitalnote";
 const char     CRYPTONOTE_NAME[]                             = "digitalnote_AUCC";
 const char     GENESIS_COINBASE_TX_HEX[]                     = "010601ff0001808088a5a9a307029b2e4c0281c0b02e7c53291a94d1d0cbff8883f8024f5142ee494ffbbd088071210138dc57b313e2560fa75f5d7c9a6398800855220aefb3603bc70826adc83e0cc1";
 const uint32_t GENESIS_NONCE                                 = 420;
@@ -106,7 +106,7 @@ const uint8_t  BLOCK_MAJOR_VERSION_1                         =  1;
 const uint8_t  BLOCK_MAJOR_VERSION_2                         =  2;
 const uint8_t  BLOCK_MAJOR_VERSION_3                         =  3;
 const uint8_t  BLOCK_MAJOR_VERSION_4                         =  4;
-const uint8_t  BLOCK_MAJOR_VERSION_5						 =  5;
+const uint8_t  BLOCK_MAJOR_VERSION_5                         =  5;
 const uint8_t  BLOCK_MINOR_VERSION_0                         =  0;
 const uint8_t  BLOCK_MINOR_VERSION_1                         =  1;
 
@@ -151,42 +151,43 @@ __attribute__((unused))
 // You may add here other checkpoints using the following format:
 // {<block height>, "<block hash>"},
 const std::initializer_list<CheckpointData> CHECKPOINTS = {
-   // { 1100, "990a83b3e77ba5def86311da34793e09fa3b0a2875571bd59449173fddf4e129" },
-   // { 4200, "76af92fc41eadf9c99df91efc08011d0fce6f3f55b131da2449c187f432f91f7" },
-   // { 11000, "970c15459e4d484166c36e303fcf35886e14633b40b1fe4e3f250eb03eaca1f8" },
-   //{ 22000, "ae9ab36c4ff2cf215d49ffa4358d108dd777b8897c2d873a064dc103fea2b5ab" },
-   //{ 33000, "3fac95a900e65391d693e2cb331a26c757595baac133b9fa24936dd50fc7465f" },
-   //{ 44000, "071a97648427ad25ec206ae7101534c9b011376f05dee04780b5edb22f9a919e" },
-   //{ 47000, "a2fda9ea94260ed7177aec5b74802606bc7800d4a1713f761ac71a0883b4b480" },
-   //{ 55000, "57f48bc9b2dddace94bddc8858cf1cdf5e68cc0db763d7ebcab71b388755e0ce" },
-   //{ 66000, "90a2bc9e75503d386d41c48e698d474c337291f8c4417d63e90a8b5727f06320" },
-   //{ 80550, "169e6b813b8ee072735bf7f7dc45b9b712b89a1317d1a4e672f6bba785a564fc" },
-   //{ 99000, "2a83ce4fbd12ccb2eb60869d11d6b4212e8a810ab33408a2feaa3066d2853d9f" },
-   //{ 122000, "926e915d84af28a8908809ae94f75bdea50d99d2d1a67fd5598bb91ccdf62c83" },
-   //{ 132000, "b58a6b387d3120ea11061642a6a78a9a4b7800b77a44fae7ec1c73b60f2e375f" },
-   //{ 136212, "5a935b048194d8b6ffb33b744c73cbe632da4f3c4d5e4c4488967d9431ba2a36" },
-   //{ 136213, "336b687fdb96457cf4060072f76fc9e4e9281744822e0892c9ea128445bbebc7" },
-   //{ 137000, "ae73be718076ab00371f81fa5f604c9e020f25abcb48f85b631bde0cabaff048" },
-   //{ 143000, "2a9dc9638f091078a67d085ae97caa28f1061c0ae088463977f3df6435a9b585" },
-   //{ 145000, "4b2bbfc07f42ae151119f732e568cba3bee2a0031e3eded2c94958b830e07e5a" },
-   // { 147000, "fe3eaf9a565426fe0498377157b62edd3c139e4b18803a4ca9bb6f78a6c0686b" },
-   // { 156700, "c3f250d8009ac15860095835e3f3c696c470fada129cae6e0946e1cdc1d2f51a" },
-   // { 159200, "fa120a1ef19a13c3fc629a781e37e31617c36e0b99321e3959a7e3f25ff281d3" },
-   // { 222000, "f74f764b1f3df8ab039657f73486fcc3a91dab2018e38b5c1d7838bb6a947711" },
-   // { 252525, "7798185c79c06fe58f04f69d7f5f0b0d2a08003fd1c9b11707b5d54d63b26832" },
-   // { 253000, "43c3acbd7e235d2efbf9409c8c3e1bfdc29780b200804608b668f8d5b2251220" },
-   // { 258852, "9f2b0ff556c8088b498928e835134727aede39832bf3c66cc439384b12bab289" },
-   // { 317000, "775fe833c74ca0e0de22a259364379e83a1b228c99cfdabc52e50beabacf08d3" },
-   // { 336336, "0075d20bf2b378750a5cc34baa208f75bf3119c5cb009b2b4182e733dff34b67" },
-   // { 360000, "296cf882a4d14a12de1403ff9326b446ba3694b032fa46e33136a58903897475" },
-   // { 385000, "79de0d2a49a2ad3407003931c0caa2cd040594519fcaf955ae724909334883ee" },
-   // { 418020, "23f02d8af6318504659e94c55047ac464ad35d42ca4af5668c279f1e484fad19" },
-   //{ 555878, "46d7eac1aea2054be6d98189b865f36c71e3444768f10ccf7fb6261e56e792fa" },
+//    { 1100, "990a83b3e77ba5def86311da34793e09fa3b0a2875571bd59449173fddf4e129" },
+//    { 4200, "76af92fc41eadf9c99df91efc08011d0fce6f3f55b131da2449c187f432f91f7" },
+//    { 11000, "970c15459e4d484166c36e303fcf35886e14633b40b1fe4e3f250eb03eaca1f8" },
+//    { 22000, "ae9ab36c4ff2cf215d49ffa4358d108dd777b8897c2d873a064dc103fea2b5ab" },
+//    { 33000, "3fac95a900e65391d693e2cb331a26c757595baac133b9fa24936dd50fc7465f" },
+//    { 44000, "071a97648427ad25ec206ae7101534c9b011376f05dee04780b5edb22f9a919e" },
+//    { 47000, "a2fda9ea94260ed7177aec5b74802606bc7800d4a1713f761ac71a0883b4b480" },
+//    { 55000, "57f48bc9b2dddace94bddc8858cf1cdf5e68cc0db763d7ebcab71b388755e0ce" },
+//    { 66000, "90a2bc9e75503d386d41c48e698d474c337291f8c4417d63e90a8b5727f06320" },
+//    { 80550, "169e6b813b8ee072735bf7f7dc45b9b712b89a1317d1a4e672f6bba785a564fc" },
+//    { 99000, "2a83ce4fbd12ccb2eb60869d11d6b4212e8a810ab33408a2feaa3066d2853d9f" },
+//    { 122000, "926e915d84af28a8908809ae94f75bdea50d99d2d1a67fd5598bb91ccdf62c83" },
+//    { 132000, "b58a6b387d3120ea11061642a6a78a9a4b7800b77a44fae7ec1c73b60f2e375f" },
+//    { 136212, "5a935b048194d8b6ffb33b744c73cbe632da4f3c4d5e4c4488967d9431ba2a36" },
+//    { 136213, "336b687fdb96457cf4060072f76fc9e4e9281744822e0892c9ea128445bbebc7" },
+//    { 137000, "ae73be718076ab00371f81fa5f604c9e020f25abcb48f85b631bde0cabaff048" },
+//    { 143000, "2a9dc9638f091078a67d085ae97caa28f1061c0ae088463977f3df6435a9b585" },
+//    { 145000, "4b2bbfc07f42ae151119f732e568cba3bee2a0031e3eded2c94958b830e07e5a" },
+//    { 147000, "fe3eaf9a565426fe0498377157b62edd3c139e4b18803a4ca9bb6f78a6c0686b" },
+//    { 156700, "c3f250d8009ac15860095835e3f3c696c470fada129cae6e0946e1cdc1d2f51a" },
+//    { 159200, "fa120a1ef19a13c3fc629a781e37e31617c36e0b99321e3959a7e3f25ff281d3" },
+//    { 222000, "f74f764b1f3df8ab039657f73486fcc3a91dab2018e38b5c1d7838bb6a947711" },
+//    { 252525, "7798185c79c06fe58f04f69d7f5f0b0d2a08003fd1c9b11707b5d54d63b26832" },
+//    { 253000, "43c3acbd7e235d2efbf9409c8c3e1bfdc29780b200804608b668f8d5b2251220" },
+//    { 258852, "9f2b0ff556c8088b498928e835134727aede39832bf3c66cc439384b12bab289" },
+//    { 317000, "775fe833c74ca0e0de22a259364379e83a1b228c99cfdabc52e50beabacf08d3" },
+//    { 336336, "0075d20bf2b378750a5cc34baa208f75bf3119c5cb009b2b4182e733dff34b67" },
+//    { 360000, "296cf882a4d14a12de1403ff9326b446ba3694b032fa46e33136a58903897475" },
+//    { 385000, "79de0d2a49a2ad3407003931c0caa2cd040594519fcaf955ae724909334883ee" },
+//    { 418020, "23f02d8af6318504659e94c55047ac464ad35d42ca4af5668c279f1e484fad19" },
+//    { 555878, "46d7eac1aea2054be6d98189b865f36c71e3444768f10ccf7fb6261e56e792fa" },
 };
 
 const std::map<const uint32_t, const uint8_t> Version = {
 	// {BlockIndex , Version}
-	{ 10, 1 }
+//	{ 668682, 1 }
+    { 10, 1 }
 };
 
 } // CryptoNote

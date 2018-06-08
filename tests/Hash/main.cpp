@@ -29,10 +29,6 @@ extern "C" {
     Crypto::tree_hash((const char (*)[32]) data, length >> 5, hash);
   }
 
-  //static void slow_hash(const void *data, size_t length, char *hash) {
-  //  cn_slow_hash(*context, data, length, *reinterpret_cast<chash *>(hash));
-  //}
-
   static void cn_slow_hash_0(const void *data, size_t length, char *hash) {
 	  return cn_slow_hash(*context, data, length, *reinterpret_cast<chash *>(hash), 0);
   }

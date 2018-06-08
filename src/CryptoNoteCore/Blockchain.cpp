@@ -671,16 +671,17 @@ bool Blockchain::getBlockHeight(const Crypto::Hash& blockId, uint32_t& blockHeig
 }
 
 uint8_t Blockchain::getForkVersion() {
-	uint32_t height = getCurrentBlockchainHeight();
-	const std::map<const uint32_t, const uint8_t>* versionMap;
-    versionMap = &Version;
-	uint8_t lastForkVersion = 0;
-	for (auto const& it : *versionMap) {
-		if (height > it.first) {
-			lastForkVersion = it.second;
-		}
-	}
-	return lastForkVersion;
+  uint32_t height = getCurrentBlockchainHeight();
+  const std::map<const uint32_t, const uint8_t>* versionMap;
+  versionMap = &Version;
+
+  uint8_t lastForkVersion = 0;
+    for (auto const& it : *versionMap) {
+      if (height > it.first) {
+        lastForkVersion = it.second;
+      }
+    }
+  return lastForkVersion;
 }
 
 difficulty_type Blockchain::getDifficultyForNextBlock() {
@@ -689,6 +690,8 @@ difficulty_type Blockchain::getDifficultyForNextBlock() {
   std::vector<difficulty_type> commulative_difficulties;
   uint8_t version = getForkVersion();
   size_t difficultyBlocksCount;
+  auto height = getCurrentBlockchainHeight();
+
   if (version == 0) {
 	  difficultyBlocksCount = static_cast<uint64_t>(m_currency.difficultyBlocksCount1()); 
   }
@@ -708,8 +711,8 @@ difficulty_type Blockchain::getDifficultyForNextBlock() {
 	  logger(DEBUGGING) << "Using legacy difficulty algo (v0)";
 	  return m_currency.nextDifficulty1(timestamps, commulative_difficulties);
   }
-  logger(DEBUGGING) << "Using Zawy's LWMA-2 difficulty algo (v1 latest)";
-  return m_currency.nextDifficulty(timestamps, commulative_difficulties);
+  logger(DEBUGGING) << "Using Zawy's LWMA difficulty algo (v1 latest)";
+  return m_currency.nextDifficulty(timestamps, commulative_difficulties, height);
 }
 
 uint64_t Blockchain::getCoinsInCirculation() {
@@ -857,6 +860,8 @@ difficulty_type Blockchain::get_next_difficulty_for_alternative_chain(const std:
   std::vector<difficulty_type> commulative_difficulties;
   uint8_t version = getForkVersion();
   size_t difficultyBlocksCount;
+  auto height = getCurrentBlockchainHeight();
+
   if (version == 0) {
 	  difficultyBlocksCount = static_cast<uint64_t>(m_currency.difficultyBlocksCount1());
   }
@@ -866,7 +871,7 @@ difficulty_type Blockchain::get_next_difficulty_for_alternative_chain(const std:
   if (alt_chain.size() < difficultyBlocksCount) {
     std::lock_guard<decltype(m_blockchain_lock)> lk(m_blockchain_lock);
     size_t main_chain_stop_offset = alt_chain.size() ? alt_chain.front()->second.height : bei.height;
-	size_t main_chain_count = difficultyBlocksCount - std::min(static_cast<uint64_t>(difficultyBlocksCount), static_cast<uint64_t>(alt_chain.size()));
+    size_t main_chain_count = difficultyBlocksCount - std::min(difficultyBlocksCount, alt_chain.size());
     main_chain_count = std::min(main_chain_count, main_chain_stop_offset);
     size_t main_chain_start_offset = main_chain_stop_offset - main_chain_count;
 
@@ -877,24 +882,24 @@ difficulty_type Blockchain::get_next_difficulty_for_alternative_chain(const std:
       commulative_difficulties.push_back(m_blocks[main_chain_start_offset].cumulative_difficulty);
     }
 
-	if (!((alt_chain.size() + timestamps.size()) <= difficultyBlocksCount)) {
+    if (!((alt_chain.size() + timestamps.size()) <= difficultyBlocksCount)) {
       logger(ERROR, BRIGHT_RED) << "Internal error, alt_chain.size()[" << alt_chain.size() << "] + timestamps.size()[" << timestamps.size() <<
-		  "] NOT <= m_currency.difficultyBlocksCount()[" << difficultyBlocksCount << ']'; return false;
+        "] NOT <= m_currency.difficultyBlocksCount()[" << difficultyBlocksCount << ']'; return false;
     }
     for (auto it : alt_chain) {
       timestamps.push_back(it->second.bl.timestamp);
       commulative_difficulties.push_back(it->second.cumulative_difficulty);
     }
   } else {
-	timestamps.resize(std::min(static_cast<uint64_t>(alt_chain.size()), static_cast<uint64_t>(difficultyBlocksCount)));
-	commulative_difficulties.resize(std::min(static_cast<uint64_t>(alt_chain.size()), static_cast<uint64_t>(difficultyBlocksCount)));
+    timestamps.resize(std::min(alt_chain.size(), difficultyBlocksCount));
+    commulative_difficulties.resize(std::min(alt_chain.size(), difficultyBlocksCount));
     size_t count = 0;
     size_t max_i = timestamps.size() - 1;
     BOOST_REVERSE_FOREACH(auto it, alt_chain) {
       timestamps[max_i - count] = it->second.bl.timestamp;
       commulative_difficulties[max_i - count] = it->second.cumulative_difficulty;
       count++;
-	  if (count >= difficultyBlocksCount) {
+      if (count >= difficultyBlocksCount) {
         break;
       }
     }
@@ -902,7 +907,7 @@ difficulty_type Blockchain::get_next_difficulty_for_alternative_chain(const std:
   if (version == 0) {
 	return m_currency.nextDifficulty1(timestamps, commulative_difficulties);
   }
-  return m_currency.nextDifficulty(timestamps, commulative_difficulties);
+  return m_currency.nextDifficulty(timestamps, commulative_difficulties, height);
 }
 
 bool Blockchain::prevalidate_miner_transaction(const Block& b, uint32_t height) {
@@ -1662,10 +1667,10 @@ bool Blockchain::check_tx_outputs(const Transaction& tx) const {
 }
 
 bool Blockchain::check_block_timestamp_main(const Block& b) {
-	uint64_t ftl = m_currency.blockFutureTimeLimit();
-	if (getForkVersion() == 1)
-		ftl = m_currency.blockFutureTimeLimit_v1();
-	if (b.timestamp > get_adjusted_time() + ftl) {
+  uint64_t ftl = m_currency.blockFutureTimeLimit();
+  if (getForkVersion() == 1)
+    ftl = m_currency.blockFutureTimeLimit_v1();
+  if (b.timestamp > get_adjusted_time() + ftl) {
     logger(INFO, BRIGHT_WHITE) <<
       "Timestamp of block with id: " << get_block_hash(b) << ", " << b.timestamp << ", bigger than adjusted time + 2 hours";
     return false;
@@ -2343,7 +2348,7 @@ bool Blockchain::getLowerBound(uint64_t timestamp, uint64_t startOffset, uint32_
 
   uint64_t ftl = m_currency.blockFutureTimeLimit();
   if (getForkVersion() == 1)
-	 ftl = m_currency.blockFutureTimeLimit_v1();
+    ftl = m_currency.blockFutureTimeLimit_v1();
 
   auto bound = std::lower_bound(m_blocks.begin() + startOffset, m_blocks.end(), timestamp - ftl,
     [](const BlockEntry& b, uint64_t timestamp) { return b.bl.timestamp < timestamp; });

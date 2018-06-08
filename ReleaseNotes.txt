@@ -1,3 +1,10 @@
+Release notes 4.0.4-beta
+
+- PoW change to CryptonightV1 (Cryptonight variant 1 also known as "monero7")
+- Difficulty change to Zawy's LWMA to prevent hash attacks
+- Seed nodes updated to be operational
+- Latest checkpoint and Payment Gateway wallet address save fix
+
 Release notes 4.0.3-beta
 
 - Blockchain synchronization improvements

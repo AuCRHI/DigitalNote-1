@@ -488,7 +488,7 @@ bool get_block_longhash(cn_context &context, const Block& b, Hash& res) {
   } else {
     return false;
   }
-  //if version is 5 or more use variant 1 otherwise use variant 0
+  //explicit PoW change (cryptonightv1) for V5+ blocks
   int cn_variant;
   if (b.majorVersion < 5)
   {
