@@ -524,9 +524,9 @@ difficulty_type Currency::nextDifficulty(std::vector<uint64_t> timestamps,
 	const int64_t T = static_cast<int64_t>(m_difficultyTarget);
 	int64_t N = static_cast<int64_t>(parameters::DIFFICULTY_WINDOW_V1) - 1;
 
-	// Hardcode difficulty for 61 blocks after fork height: 
-	if (height >= parameters::UPGRADE_HEIGHT_V5 && height < parameters::UPGRADE_HEIGHT_V5 + 62) {
-		return 1000000000;
+	// Hardcode difficulty at 3 for 10 blocks after test fork height: 
+	if (height >= parameters::UPGRADE_HEIGHT_V5 && height < parameters::UPGRADE_HEIGHT_V5 + 10) {
+		return 3;
 	}
 
 	// Return a difficulty of 1 for first 3 blocks if it's the start of the chain.
