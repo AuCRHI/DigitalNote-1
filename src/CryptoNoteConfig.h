@@ -34,7 +34,7 @@ const uint64_t MINIMUM_FEE                                   = UINT64_C(100000);
 const uint64_t DEFAULT_DUST_THRESHOLD                        = UINT64_C(100000);     // pow(10, 5)
 
 //const uint64_t DIFFICULTY_TARGET                           = 240; // pre-LWMA value
-const uint64_t DIFFICULTY_TARGET                             = 20; // LWMA TEMP
+const uint64_t DIFFICULTY_TARGET                             = 30; // LWMA TEMP
 const uint64_t CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT            = 60 * 60 * 2;
 const uint64_t CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V1         = 3 * DIFFICULTY_TARGET;  //LWMA
 const uint64_t EXPECTED_NUMBER_OF_BLOCKS_PER_DAY             = 24 * 60 * 60 / DIFFICULTY_TARGET;

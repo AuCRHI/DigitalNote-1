@@ -529,7 +529,7 @@ difficulty_type Currency::nextDifficulty(std::vector<uint64_t> timestamps,
 
 	// Hardcode difficulty for 61 blocks after fork height: 
 	if (height >= parameters::UPGRADE_HEIGHT_V5 && height < parameters::UPGRADE_HEIGHT_V5 + 62) {
-		return 10;
+		return 1000;
 	}
 
 	// TS and CD vectors should be size 61 after startup.
@@ -550,12 +550,11 @@ difficulty_type Currency::nextDifficulty(std::vector<uint64_t> timestamps,
 	next_D = ((cumulativeDifficulties[N] - cumulativeDifficulties[0])*T*(N + 1) * 99) / (100 * 2 * L);
 
 	// begin LWMA-2 changes from LWMA
-
 	prev_D = cumulativeDifficulties[N] - cumulativeDifficulties[N - 1];
-	SMA = (cumulativeDifficulties[N] - cumulativeDifficulties[N - 30]) * 4 * T /
-		(3 * N*T + (int64_t)(timestamps[N]) - (int64_t)(timestamps[N - 30]));
-	if ((sum_3_ST < (9 * T) / 10) && (prev_D < (12 * SMA) / 10)) {
-		next_D = (108 * prev_D) / 100; 
+	SMA = (cumulativeDifficulties[N] - cumulativeDifficulties[N - N / 2]) * 4 * T /
+		(3 * (N - N / 2)*T + (int64_t)(timestamps[N]) - (int64_t)(timestamps[N - N / 2]));
+	if (sum_3_ST < (8 * T) / 10 && (prev_D * 109) / 100 < (12 * SMA) / 10) {
+		next_D = (prev_D * 109) / 100;
 	}
 	// end LWMA-2 section
 
