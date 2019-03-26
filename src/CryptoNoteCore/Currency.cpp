@@ -65,7 +65,8 @@ bool Currency::init() {
     m_upgradeHeightV3 = static_cast<uint32_t>(-1);
     m_upgradeHeightV4 = static_cast<uint32_t>(-1);
     m_upgradeHeightV5 = static_cast<uint32_t>(-1);
-	m_upgradeHeightV6 = static_cast<uint32_t>(-1);
+	  m_upgradeHeightV6 = static_cast<uint32_t>(-1);
+    m_upgradeHeightV7 = static_cast<uint32_t>(-1);
     m_blocksFileName = "testnet_" + m_blocksFileName;
     m_blocksCacheFileName = "testnet_" + m_blocksCacheFileName;
     m_blockIndexesFileName = "testnet_" + m_blockIndexesFileName;
@@ -142,6 +143,8 @@ uint32_t Currency::upgradeHeight(uint8_t majorVersion) const {
     return m_upgradeHeightV5;
   } else if (majorVersion == BLOCK_MAJOR_VERSION_6) {
     return m_upgradeHeightV6;
+  } else if (majorVersion == BLOCK_MAJOR_VERSION_7) {
+    return m_upgradeHeightV7;
   } else {
     return static_cast<uint32_t>(-1);
   }
@@ -593,7 +596,7 @@ difficulty_type Currency::nextDifficulty(std::vector<uint64_t> timestamps,
 
   // Hardcode difficulty back to a low reset for block 984206 continuing 61 blocks after fork height: 
   if (height >= parameters::UPGRADE_HEIGHT_V7 && height <= parameters::UPGRADE_HEIGHT_V7 + N) {
-    return return 1000000; // low diff reset for swap fork
+    return 1000000; // low diff reset for swap fork
   }
 
 	// TS and CD vectors must be size N+1 after startup, and element N is most recent block.
@@ -688,6 +691,7 @@ bool Currency::checkProofOfWork(Crypto::cn_context& context, const Block& block,
   case BLOCK_MAJOR_VERSION_4:
   case BLOCK_MAJOR_VERSION_5:
   case BLOCK_MAJOR_VERSION_6:
+  case BLOCK_MAJOR_VERSION_7:
     return checkProofOfWorkV2(context, block, currentDiffic, proofOfWork);
   }
 
@@ -767,7 +771,7 @@ CurrencyBuilder::CurrencyBuilder(Logging::ILogger& log) : m_currency(log) {
   upgradeHeightV4(parameters::UPGRADE_HEIGHT_V4);
   upgradeHeightV5(parameters::UPGRADE_HEIGHT_V5);
   upgradeHeightV6(parameters::UPGRADE_HEIGHT_V6);
-  upgradeHeightV6(parameters::UPGRADE_HEIGHT_V7);
+  upgradeHeightV7(parameters::UPGRADE_HEIGHT_V7);
   upgradeVotingThreshold(parameters::UPGRADE_VOTING_THRESHOLD);
   upgradeVotingWindow(parameters::UPGRADE_VOTING_WINDOW);
   upgradeWindow(parameters::UPGRADE_WINDOW);
