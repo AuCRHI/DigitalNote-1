@@ -1,5 +1,6 @@
 // Copyright (c) 2011-2016 The Cryptonote developers
 // Copyright (c) 2014-2017 XDN-project developers
+// Copyright (c) 2018 DigitalNote XDN developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -7,6 +8,7 @@
 
 #include <cstdint>
 #include <initializer_list>
+#include <map>
 
 namespace CryptoNote {
 namespace parameters {
@@ -16,9 +18,9 @@ const size_t   CRYPTONOTE_MAX_BLOCK_BLOB_SIZE                = 500000000;
 const size_t   CRYPTONOTE_MAX_TX_SIZE                        = 1000000000;
 const uint64_t CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX       = 0xDB; // addresses start with "0xDB"
 const size_t   CRYPTONOTE_MINED_MONEY_UNLOCK_WINDOW          = 6;
-const uint64_t CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT            = 60 * 60 * 2;
 
 const size_t   BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW             = 30;
+const size_t   BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW_V1          = 11;  //jagerman's patch
 
 const uint64_t MONEY_SUPPLY                                  = UINT64_C(858986905600000000);
 
@@ -32,11 +34,15 @@ const uint64_t COIN                                          = UINT64_C(10000000
 const uint64_t MINIMUM_FEE                                   = UINT64_C(100000);     // pow(10, 5)
 const uint64_t DEFAULT_DUST_THRESHOLD                        = UINT64_C(100000);     // pow(10, 5)
 
-const uint64_t DIFFICULTY_TARGET                             = 240; // seconds
+const uint64_t DIFFICULTY_TARGET                             = 240; // pre-LWMA value
+const uint64_t DIFFICULTY_TARGET_V1                          = 120; // LWMA-2
+const uint64_t CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT            = 60 * 60 * 2;
+const uint64_t CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V1         = 3 * DIFFICULTY_TARGET;  //LWMA-2
 const uint64_t EXPECTED_NUMBER_OF_BLOCKS_PER_DAY             = 24 * 60 * 60 / DIFFICULTY_TARGET;
 const size_t   DIFFICULTY_WINDOW                             = 240; // blocks
+const size_t   DIFFICULTY_WINDOW_V1                          = 60; // LWMA-2
 const size_t   DIFFICULTY_CUT                                = 30;  // timestamps to cut after sorting
-const size_t   DIFFICULTY_LAG                                = 15;
+const size_t   DIFFICULTY_LAG                                = 15;  // not used in LWMA-2
 static_assert(2 * DIFFICULTY_CUT <= DIFFICULTY_WINDOW - 2, "Bad DIFFICULTY_WINDOW or DIFFICULTY_CUT");
 
 const uint64_t DEPOSIT_MIN_AMOUNT                            = 150 * COIN;
@@ -66,6 +72,9 @@ const size_t   FUSION_TX_MIN_IN_OUT_COUNT_RATIO              = 4;
 const uint32_t UPGRADE_HEIGHT_V2                             = 136212;
 const uint32_t UPGRADE_HEIGHT_V3                             = 317950;
 const uint32_t UPGRADE_HEIGHT_V4                             = 338000;
+const uint32_t UPGRADE_HEIGHT_V5                             = 669369;  //June 27 refork
+const uint32_t UPGRADE_HEIGHT_V6                             = 704614;  //Aug 20 base reward fork fix
+const uint32_t UPGRADE_HEIGHT_V7                             = 984206;  //March 29th swap fork
 const unsigned UPGRADE_VOTING_THRESHOLD                      = 90;               // percent
 const size_t   UPGRADE_VOTING_WINDOW                         = EXPECTED_NUMBER_OF_BLOCKS_PER_DAY;  // blocks
 const size_t   UPGRADE_WINDOW                                = EXPECTED_NUMBER_OF_BLOCKS_PER_DAY;  // blocks
@@ -83,6 +92,7 @@ const char     MINER_CONFIG_FILE_NAME[]                      = "miner_conf.json"
 
 const uint64_t START_BLOCK_REWARD                            = (UINT64_C(320000) * parameters::COIN);
 const uint64_t MIN_BLOCK_REWARD                              = (UINT64_C(150) * parameters::COIN);
+const uint64_t SWAP_BLOCK_REWARD                             = (UINT64_C(0) * parameters::COIN); //March 29th swap fork
 const uint64_t REWARD_HALVING_INTERVAL                       = (UINT64_C(11000));
 
 const char     CRYPTONOTE_NAME[]                             = "digitalnote";
@@ -95,6 +105,9 @@ const uint8_t  BLOCK_MAJOR_VERSION_1                         =  1;
 const uint8_t  BLOCK_MAJOR_VERSION_2                         =  2;
 const uint8_t  BLOCK_MAJOR_VERSION_3                         =  3;
 const uint8_t  BLOCK_MAJOR_VERSION_4                         =  4;
+const uint8_t  BLOCK_MAJOR_VERSION_5                         =  5;
+const uint8_t  BLOCK_MAJOR_VERSION_6                         =  6;
+const uint8_t  BLOCK_MAJOR_VERSION_7                         =  7;
 const uint8_t  BLOCK_MINOR_VERSION_0                         =  0;
 const uint8_t  BLOCK_MINOR_VERSION_1                         =  1;
 
@@ -121,11 +134,10 @@ const size_t   P2P_DEFAULT_HANDSHAKE_INVOKE_TIMEOUT          = 5000;          //
 const char     P2P_STAT_TRUSTED_PUB_KEY[]                    = "85ae8734f90bc1ee295ceb0ec05a49852d4dbbc9d1c27a619b5f4bdf26a0196e";
 
 const std::initializer_list<const char*> SEED_NODES = {
-  "64.34.219.46:42080",
-  "66.172.27.42:42080",
-  "66.172.27.6:42080",
-  "76.74.170.207:42080",
-  "76.74.219.163:42080",
+  "seed1.digitalnote.biz:42080",
+  "seed2.digitalnote.biz:42080",
+  "seed3.digitalnote.biz:42080",
+  "seed4.digitalnote.biz:42080",
 };
 
 struct CheckpointData {
@@ -170,6 +182,20 @@ const std::initializer_list<CheckpointData> CHECKPOINTS = {
     { 360000, "296cf882a4d14a12de1403ff9326b446ba3694b032fa46e33136a58903897475" },
     { 385000, "79de0d2a49a2ad3407003931c0caa2cd040594519fcaf955ae724909334883ee" },
     { 418020, "23f02d8af6318504659e94c55047ac464ad35d42ca4af5668c279f1e484fad19" },
+    { 555878, "46d7eac1aea2054be6d98189b865f36c71e3444768f10ccf7fb6261e56e792fa" },
+    { 663752, "fa757b3f2afe9381c59e96584ad030638e992f5fe49ac2508e8732d53ff5cf25" },
+    { 666192, "204cfa408cf13a87305381ffbceea25d99a327256c5077ac42b7d6310029d9c2" },
+    { 669370, "06ef3179b8ea8a6b4b1945424384a73900a6c1a3a30bede9179dea7c6ca98a62" },
+    { 676362, "0dd6e5c5371fadc30a995b5819698ecdbf438a96e3920df74f18164426ef620a" },
+	{ 704170, "a609c3fbbf72489a48c27262799557b999b6aed89cafd0ec4108a086bdb64986" },
+    { 984206, "e8ac95478c238429dda8d4dfd4ea8a30db3d3ed3b06c05eaaf4047f3ca79446c" },
+};
+
+const std::map<const uint32_t, const uint8_t> Version = {
+	// {BlockIndex , Version}
+	{ 669369, 1 },
+    { 704614, 2 },
+    { 984206, 3 },
 };
 
 } // CryptoNote

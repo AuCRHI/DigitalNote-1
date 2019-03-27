@@ -36,6 +36,8 @@ namespace {
       currencyBuilder.upgradeHeightV2(upgradeHeight);
       currencyBuilder.upgradeHeightV3(UpgradeDetector::UNDEF_HEIGHT);
       currencyBuilder.upgradeHeightV4(UpgradeDetector::UNDEF_HEIGHT);
+      currencyBuilder.upgradeHeightV5(UpgradeDetector::UNDEF_HEIGHT);
+	  currencyBuilder.upgradeHeightV6(UpgradeDetector::UNDEF_HEIGHT);
       return currencyBuilder.currency();
     }
 
